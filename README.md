@@ -1,4 +1,4 @@
-# 💳 Credit Card Fraud Detection
+# Credit Card Fraud Detection
 
 > End-to-end machine learning project to detect fraudulent credit card transactions using Random Forest, SMOTE oversampling, and comprehensive EDA visualizations.
 
