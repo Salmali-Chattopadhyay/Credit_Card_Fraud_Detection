@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card Fraud Detection | ML Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #04080f;
+  --surface: #0d1526;
+  --surface2: #111f38;
+  --border: #1e3a5f;
+  --accent: #00d4ff;
+  --accent2: #0066ff;
+  --danger: #ff4060;
+  --safe: #00e5a0;
+  --warning: #ffd700;
+  --text: #ccd6f6;
+  --muted: #7a8aaa;
+  --white: #e8f0ff;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 3px; }
+
+/* ── Grid bg ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 3rem;
+  height: 64px;
+  background: rgba(4,8,15,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+.nav-logo span { color: var(--danger); }
+.nav-links { display: flex; gap: 2rem; }
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--accent); }
+
+/* ── Hero ── */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8rem 2rem 4rem;
+  text-align: center;
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,102,255,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  border: 1px solid rgba(0,212,255,0.3);
+  background: rgba(0,212,255,0.06);
+  padding: 0.4rem 1rem;
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.6s ease both;
+}
+h1 {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--white);
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  max-width: 600px;
+  margin: 1.5rem auto 3rem;
+  font-size: 1.1rem;
+  color: var(--muted);
+  line-height: 1.7;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+.hero-stats {
+  display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+.hstat {
+  text-align: center;
+  border: 1px solid var(--border);
+  background: rgba(13,21,38,0.7);
+  padding: 1.2rem 2rem;
+  border-radius: 4px;
+  min-width: 130px;
+  backdrop-filter: blur(8px);
+}
+.hstat .val {
+  font-family: var(--mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+.hstat .lbl {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+.scroll-hint {
+  position: absolute; bottom: 2.5rem; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  font-family: var(--mono); font-size: 0.65rem;
+  color: var(--muted); letter-spacing: 0.1em;
+  animation: bounce 2s infinite;
+}
+.scroll-hint::after {
+  content: '▼';
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+/* ── Sections ── */
+section { position: relative; z-index: 1; }
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+}
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.section-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 1rem;
+}
+.section-desc {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 640px;
+  margin-bottom: 3rem;
+}
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ── Pipeline steps ── */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+  grid-auto-rows: 1fr;
+}
+.p-step {
+  background: var(--surface);
+  padding: 2rem 1.5rem;
+  min-height: 220px;
+  flex-direction: column;
+  justify-content: space-between;
+  display: flex;
+  transition: background 0.2s;
+  position: relative;
+  height:100%;
+}
+.p-step ul {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+}
+
+.p-step li {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0.3rem;
+}
+.p-step:hover { background: var(--surface2); }
+.p-step .step-num {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent2);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+.p-step .step-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+.p-step h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+.p-step p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+/* ── Charts grid ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 1.5rem;
+}
+.chart-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.chart-card:hover {
+  border-color: rgba(0,212,255,0.4);
+  transform: translateY(-3px);
+}
+.chart-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.chart-title { font-size: 0.85rem; font-weight: 700; color: var(--white); }
+.chart-tag {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent);
+  border: 1px solid rgba(0,212,255,0.2);
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+}
+.chart-card img {
+  width: 100%; display: block;
+  background: #0a0f1e;
+}
+.small-chart img {
+  height: 450px;          /*  control height */
+  object-fit: contain;    /* keeps aspect ratio (no distortion) */
+  background: #0a0f1e;    /* keeps your theme */
+}
+.big-chart img {
+  height: 600px;          /*  control height */
+  object-fit: contain;    /* keeps aspect ratio (no distortion) */
+  background: #0a0f1e;    /* keeps your theme */
+}
+
+/* ── Model results ── */
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.model-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.model-card.winner { border-color: rgba(0,212,255,0.5); }
+.model-header {
+  padding: 1.2rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.model-name { font-size: 1rem; font-weight: 700; color: var(--white); }
+.winner-badge {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  background: rgba(0,212,255,0.1);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+}
+.model-metrics { padding: 1.5rem; }
+.metric-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(30,58,95,0.5);
+}
+.metric-row:last-child { border-bottom: none; }
+.metric-name {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.metric-val {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.metric-val.good { color: var(--safe); }
+.metric-val.ok   { color: var(--warning); }
+.metric-val.great { color: var(--accent); }
+
+
+/* ── Metric bar ── */
+.metric-bar-wrap { margin-top: 0.4rem; }
+.metric-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 0.3rem;
+}
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+  width: 0;
+}
+
+
+/* ── SMOTE info ── */
+.smote-banner {
+  border: 1px solid rgba(255,215,0,0.25);
+  background: rgba(255,215,0,0.04);
+  border-radius: 6px;
+  padding: 1.5rem 2rem;
+  display: flex; align-items: flex-start; gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.smote-icon { font-size: 2rem; flex-shrink: 0; }
+.smote-title { font-size: 0.95rem; font-weight: 700; color: var(--warning); margin-bottom: 0.4rem; }
+.smote-body { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+/* ── Tech stack ── */
+.stack-grid {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+}
+.stack-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.75rem 1.2rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.stack-item:hover { border-color: var(--accent2); }
+.stack-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 3rem 2rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  position: relative; z-index: 1;
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer .heart { color: var(--danger); }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(8px); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Live indicator ── */
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--safe);
+  margin-right: 0.5rem;
+  animation: pulse 1.5s infinite;
+}
+
+/* ── Table ── */
+.data-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--mono); font-size: 0.8rem;
+}
+.data-table th {
+  text-align: left;
+  padding: 0.8rem 1rem;
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,102,255,0.05);
+}
+.data-table td {
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  border-bottom: 1px solid rgba(30,58,95,0.4);
+}
+.data-table tr:hover td { background: var(--surface2); }
+.tag-fraud { color: var(--danger); }
+.tag-safe  { color: var(--safe); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  nav { padding: 0 1.5rem; }
+  .nav-links {
+    display: flex;
+    flex-wrap: wrap;       /* 🔥 allows wrapping */
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  nav {
+    padding: 0 1rem;
+  }
+  .section-inner { padding: 4rem 1.5rem; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .hero-stats { gap: 1rem; }
+  .hstat { padding: 1rem 1.5rem; min-width: 100px; }
+  .hstat .val { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-logo">
+    <span></span> Fraud_<span></span>Guard
+  </div>
+  <div class="nav-links">
+    <a href="#overview">Overview</a>
+    <a href="#dataset">Dataset</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#eda">Analysis</a>
+    <a href="#models">Models</a>
+    <a href="#results">Results</a>
+    <a href="#stack">Stack</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div>
+    <div class="badge">
+      <span class="live-dot"></span> · ML ENGINEERING · <span class="live-dot"></span>
+    </div>
+    <h1>Credit Card<br><em>Fraud Detection</em></h1>
+    <p class="hero-sub">
+      An end-to-end machine learning system to detect fraudulent transactions
+      using SMOTE oversampling, feature engineering, and ensemble models trained
+      on real Kaggle credit card transaction data.
+    </p>
+    <div class="hero-stats">
+      <div class="hstat">
+        <span class="val">99.93%</span>
+        <div class="lbl">AUC-ROC</div>
+      </div>
+      <div class="hstat">
+        <span class="val">29,890</span>
+        <div class="lbl">Transactions</div>
+      </div>
+      <div class="hstat">
+        <span class="val">0.43%</span>
+        <div class="lbl">Fraud Rate</div>
+      </div>
+      <div class="hstat">
+        <span class="val">96.2%</span>
+        <div class="lbl">Recall</div>
+      </div>
+    </div>
+    <div class="scroll-hint">SCROLL</div>
+  </div>
+</section>
+
+<!-- ── Overview ── -->
+<section id="overview">
+  <div class="section-inner">
+    <div class="section-label"> Overview</div>
+    <h2 class="section-title">Project Objectives</h2>
+    <p class="section-desc">
+      This project addresses the critical challenge of detecting fraudulent credit card
+      transactions in a highly imbalanced dataset (only 0.43% fraud). We implement
+      the full data science lifecycle from raw data to a deployable detection model.
+    </p>
+    <div class="pipeline" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 01</div>
+        <div class="step-icon"></div>
+        <h3>Data Collection</h3>
+        <p>Import Kaggle credit card transactions dataset. Handle privacy and security compliance.</p>
+      </div>
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 02</div>
+        <div class="step-icon"></div>
+        <h3>Data Exploration</h3>
+        <p>Identify fraud percentage and anomalies in transaction amounts across the dataset.</p>
+      </div>
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 03</div>
+        <div class="step-icon"></div>
+        <h3>Preprocessing</h3>
+        <p>Handle imbalance with SMOTE. Normalize numerical features for model training.</p>
+      </div>
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 04</div>
+        <div class="step-icon"></div>
+        <h3>EDA</h3>
+        <p>Histograms, boxplots, and correlation matrices to understand feature distributions.</p>
+      </div>
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 05</div>
+        <div class="step-icon"></div>
+        <h3>Feature Selection</h3>
+        <p>Feature importance to identify the top fraud indicators from 29 PCA features.</p>
+      </div>
+      <div class="p-step fade-in">
+        <div class="step-num">GOAL 06</div>
+        
+        <h3>AI Model</h3>
+        <p>Random Forest model to flag suspicious transactions with near-perfect AUC.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Dataset ── -->
+<section id="dataset">
+  <div class="section-inner">
+    <div class="section-label"> Dataset</div>
+    <h2 class="section-title">Data Summary</h2>
+    <p class="section-desc">
+      The dataset contains credit card transactions with 28 anonymized PCA-transformed
+      features (V1–V28), transaction time, amount, and a binary fraud label.
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:1rem; margin-bottom:3rem;">
+      <div style="border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:1.5rem; text-align:center;" class="fade-in">
+        <div style="font-family:var(--mono); font-size:2.2rem; color:var(--accent); font-weight:700;">29,890</div>
+        <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.4rem;">Total Transactions</div>
+      </div>
+      <div style="border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:1.5rem; text-align:center;" class="fade-in">
+        <div style="font-family:var(--mono); font-size:2.2rem; color:var(--danger); font-weight:700;">129</div>
+        <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.4rem;">Fraudulent (0.43%)</div>
+      </div>
+      <div style="border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:1.5rem; text-align:center;" class="fade-in">
+        <div style="font-family:var(--mono); font-size:2.2rem; color:var(--safe); font-weight:700;">29,761</div>
+        <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.4rem;">Legitimate (99.57%)</div>
+      </div>
+      <div style="border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:1.5rem; text-align:center;" class="fade-in">
+        <div style="font-family:var(--mono); font-size:2.2rem; color:var(--warning); font-weight:700;">30</div>
+        <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.4rem;">Features (V1–V28 + Time + Amount)</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--surface);" class="fade-in">
+      <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.85rem; font-weight:700; color:var(--white);">Sample Transactions</span>
+        <span style="font-family:var(--mono); font-size:0.7rem; color:var(--muted);">features V1–V5 shown for brevity</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr><th>Time</th><th>V1</th><th>V2</th><th>V3</th><th>V4</th><th>V5</th><th>Amount</th><th>Class</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0.0</td><td>-1.3598</td><td>-0.0728</td><td>2.5363</td><td>1.3782</td><td>-0.3383</td><td>$149.62</td><td class="tag-safe">✓ Legit</td></tr>
+            <tr><td>0.0</td><td>1.1919</td><td>0.2662</td><td>0.1665</td><td>0.4482</td><td>0.0600</td><td>$2.69</td><td class="tag-safe">✓ Legit</td></tr>
+            <tr><td>1.0</td><td>-1.3584</td><td>-1.3402</td><td>1.7732</td><td>0.3798</td><td>-0.5032</td><td>$378.66</td><td class="tag-safe">✓ Legit</td></tr>
+            <tr><td>2.0</td><td>-0.9663</td><td>-0.1852</td><td>1.7930</td><td>-0.8633</td><td>-0.0103</td><td>$123.50</td><td class="tag-safe">✓ Legit</td></tr>
+            <tr><td>406.0</td><td>-2.3122</td><td>1.9519</td><td>-1.6097</td><td>3.9979</td><td>-0.5220</td><td>$1.00</td><td class="tag-fraud">⚠ Fraud</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Pipeline ── -->
+<section id="pipeline">
+  <div class="section-inner">
+    <div class="section-label">Methodology</div>
+    <h2 class="section-title">ML Pipeline</h2>
+    <p class="section-desc">
+      End-to-end pipeline from raw CSV to trained models ready for real-time inference.
+    </p>
+    <div class="pipeline">
+      <div class="p-step fade-in">
+      
+        <h3>Load & Merge</h3>
+        
+        <ul>
+          <li>Ingest raw transaction data from multiple CSV files</li>
+          <li>Merge datasets into a unified structure</li>
+          <li>Remove duplicates and validate schema consistency</li>
+        </ul>
+
+      </div>
+      <div class="p-step fade-in">
+        
+        <h3>EDA</h3>
+          <ul>
+            <li>Analyze fraud distribution and class imbalance</li>
+            <li>Study transaction amount patterns and anomalies</li>
+            <li>Visualize correlations and feature relationships</li>
+          </ul>      </div>
+      <div class="p-step fade-in">
+         
+        <h3>SMOTE</h3>
+          <ul>
+            <li>Handle extreme class imbalance in dataset</li>
+            <li>Generate synthetic fraud samples using SMOTE</li>
+            <li>Improve model sensitivity to minority class</li>
+          </ul>      </div>
+      <div class="p-step fade-in">
+        
+        <h3>Normalize</h3>
+        <ul>
+          <li>Apply StandardScaler to numerical features</li>
+          <li>Ensure consistent feature scaling for models</li>
+          <li>Perform stratified 80/20 train-test split</li>
+        </ul>      </div>
+      <div class="p-step fade-in">
+        
+        <h3>Train Models</h3>
+        <ul>
+          <li>Train Random Forest and Logistic Regression models</li>
+          <li>Apply class weighting for imbalance handling</li>
+          <li>Optimize models for fraud detection performance</li>
+        </ul>      </div>
+      <div class="p-step fade-in">
+        
+
+        <h3>Evaluate</h3>
+        <ul>
+          <li>Measure AUC-ROC and Precision-Recall performance</li>
+          <li>Analyze confusion matrix for prediction errors</li>
+          <li>Evaluate precision, recall, and F1-score</li>
+        </ul>      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── EDA ── -->
+<section id="eda">
+  <div class="section-inner">
+    <div class="section-label"> Exploratory Data Analysis</div>
+    <h2 class="section-title">Data Insights</h2>
+    <p class="section-desc">
+      Visual analysis of the dataset reveals severe class imbalance, distinct
+      amount patterns, and high-value PCA features for fraud detection.
+    </p>
+    <div class="charts-grid">
+      <div class="chart-card fade-in small-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Class Distribution</span>
+          <span class="chart-tag">EDA</span>
+        </div>
+        <img src="static/charts/class_distribution.png" alt="Class distribution" loading="lazy">
+      </div>
+      <div class="chart-card fade-in big-chart" style="grid-column: 1 / -1;">
+      <div class="chart-header">
+          <span class="chart-title">Transaction Amount by Class</span>
+          <span class="chart-tag">EDA</span>
+        </div>
+        <img src="static/charts/amount_distribution.png" alt="Amount distribution" loading="lazy">
+      </div>
+      <div class="chart-card fade-in big-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Feature Correlation Matrix</span>
+          <span class="chart-tag">EDA · CORRELATION</span>
+        </div>
+        <img src="static/charts/correlation_heatmap.png" alt="Correlation heatmap" loading="lazy">
+      </div>
+      <div class="chart-card fade-in" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Top Features: Legit vs. Fraud Distribution</span>
+          <span class="chart-tag">EDA · BOXPLOT</span>
+        </div>
+        <img src="static/charts/feature_boxplots.png" alt="Feature boxplots" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── SMOTE ── -->
+<section id="smote">
+  <div class="section-inner">
+    <div class="section-label"> Preprocessing</div>
+    <h2 class="section-title">Handling Class Imbalance</h2>
+    <p class="section-desc">
+      With only 0.43% fraud, a naive model would learn to ignore fraud entirely.
+      SMOTE generates synthetic minority-class samples using k-nearest neighbours.
+    </p>
+    <div class="smote-banner fade-in">
+      <div class="smote-icon"></div>
+      <div>
+        <div class="smote-title">SMOTE — Synthetic Minority Oversampling Technique</div>
+        <div class="smote-body">
+          Training set before SMOTE: <strong style="color:var(--danger)">103 fraud</strong> vs <strong style="color:var(--safe)">23,809 legitimate</strong> transactions.
+          After SMOTE: <strong style="color:var(--accent)">23,809 fraud</strong> vs <strong style="color:var(--accent)">23,809 legitimate</strong> — a perfectly balanced training set.
+          SMOTE creates synthetic samples by interpolating between real fraud transactions
+          and their k-nearest neighbours, rather than simply duplicating existing samples.
+          This prevents overfitting to a small number of actual fraud examples.
+        </div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;" class="fade-in">
+      <div style="border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:2rem; text-align:center;">
+        <div style="font-size:0.75rem; font-family:var(--mono); color:var(--muted); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.1em;">Before SMOTE</div>
+        <div style="display:flex; justify-content:space-around;">
+          <div>
+            <div style="font-family:var(--mono); font-size:2rem; color:var(--danger); font-weight:700;">103</div>
+            <div style="font-size:0.75rem; color:var(--muted);">Fraud</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono); font-size:2rem; color:var(--safe); font-weight:700;">23,809</div>
+            <div style="font-size:0.75rem; color:var(--muted);">Legitimate</div>
+          </div>
+        </div>
+        <div style="margin-top:1.2rem; height:8px; border-radius:4px; overflow:hidden; background:var(--border);">
+          <div style="width:0.43%; height:100%; background:var(--danger);"></div>
+        </div>
+        <div style="font-size:0.72rem; color:var(--muted); margin-top:0.5rem;">0.43% fraud</div>
+      </div>
+      <div style="border:1px solid rgba(0,212,255,0.3); background:rgba(0,212,255,0.04); border-radius:6px; padding:2rem; text-align:center;">
+        <div style="font-size:0.75rem; font-family:var(--mono); color:var(--accent); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.1em;">After SMOTE</div>
+        <div style="display:flex; justify-content:space-around;">
+          <div>
+            <div style="font-family:var(--mono); font-size:2rem; color:var(--accent); font-weight:700;">23,809</div>
+            <div style="font-size:0.75rem; color:var(--muted);">Fraud</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono); font-size:2rem; color:var(--accent); font-weight:700;">23,809</div>
+            <div style="font-size:0.75rem; color:var(--muted);">Legitimate</div>
+          </div>
+        </div>
+        <div style="margin-top:1.2rem; height:8px; border-radius:4px; overflow:hidden; background:var(--border);">
+          <div style="width:50%; height:100%; background:var(--accent);"></div>
+        </div>
+        <div style="font-size:0.72rem; color:var(--muted); margin-top:0.5rem;">50% fraud · perfectly balanced</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Models ── -->
+<section id="models">
+  <div class="section-inner">
+    <div class="section-label">Model Results</div>
+    <h2 class="section-title">Model Performance</h2>
+    <p class="section-desc">
+      Two classifiers trained and evaluated. Random Forest dramatically outperforms
+      Logistic Regression on this dataset — especially on precision for fraud class.
+    </p>
+    <div class="models-grid">
+      <div class="model-card winner fade-in">
+        <div class="model-header">
+          <span class="model-name"> Random Forest</span>
+          <span class="winner-badge">★ BEST MODEL</span>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-row">
+            <span class="metric-name">AUC-ROC</span>
+            <span class="metric-val great">0.9993</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--accent)" data-width="99.93"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">AUC-PR</span>
+            <span class="metric-val great">0.9528</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--accent)" data-width="95.28"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Precision (Fraud)</span>
+            <span class="metric-val good">0.7812</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--safe)" data-width="78.12"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Recall (Fraud)</span>
+            <span class="metric-val good">0.9615</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--safe)" data-width="96.15"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">F1-Score (Fraud)</span>
+            <span class="metric-val good">0.8621</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--safe)" data-width="86.21"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Accuracy</span>
+            <span class="metric-val good">0.9987</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--safe)" data-width="99.87"></div></div>
+        </div>
+      </div>
+      <div class="model-card fade-in">
+        <div class="model-header">
+          <span class="model-name">📉 Logistic Regression</span>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-row">
+            <span class="metric-name">AUC-ROC</span>
+            <span class="metric-val ok">0.9607</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="96.07"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">AUC-PR</span>
+            <span class="metric-val ok">0.6504</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="65.04"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Precision (Fraud)</span>
+            <span class="metric-val ok">0.3750</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="37.50"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Recall (Fraud)</span>
+            <span class="metric-val ok">0.9231</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="92.31"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">F1-Score (Fraud)</span>
+            <span class="metric-val ok">0.5333</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="53.33"></div></div>
+          <div class="metric-row">
+            <span class="metric-name">Accuracy</span>
+            <span class="metric-val ok">0.9930</span>
+          </div>
+          <div class="metric-bar"><div class="metric-bar-fill" style="background:var(--warning)" data-width="99.30"></div></div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.83rem; color:var(--muted); border-left:3px solid var(--accent2); padding-left:1rem; line-height:1.7;">
+      <strong style="color:var(--white)">Note on Precision vs Recall tradeoff:</strong> In fraud detection, recall is critical — 
+      missing a fraudulent transaction (false negative) is far more costly than a false alarm (false positive). 
+      The Random Forest achieves <strong style="color:var(--safe)">96.15% recall</strong> meaning it catches nearly all fraud cases, 
+      while maintaining a reasonable 78.12% precision.
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Results ── -->
+<section id="results">
+  <div class="section-inner">
+    <div class="section-label">Evaluation Visualizations</div>
+    <h2 class="section-title">Performance Charts</h2>
+    <p class="section-desc">ROC curves, precision-recall curves, confusion matrices, and feature importances.</p>
+    <div class="charts-grid">
+      <div class="chart-card fade-in small-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Confusion Matrices</span>
+          <span class="chart-tag">EVALUATION</span>
+        </div>
+        <img src="static/charts/confusion_matrices.png" alt="Confusion matrices" loading="lazy">
+      </div>
+      <div class="chart-card fade-in small-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">ROC Curve Comparison</span>
+          <span class="chart-tag">AUC-ROC</span>
+        </div>
+        <img src="static/charts/roc_curves.png" alt="ROC curves" loading="lazy">
+      </div>
+      <div class="chart-card fade-in small-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Precision-Recall Curve</span>
+          <span class="chart-tag">AUC-PR</span>
+        </div>
+        <img src="static/charts/precision_recall.png" alt="Precision recall" loading="lazy">
+      </div>
+      <div class="chart-card fade-in small-chart" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <span class="chart-title">Feature Importance (Top 15)</span>
+          <span class="chart-tag">FEATURE SELECTION</span>
+        </div>
+        <img src="static/charts/feature_importance.png" alt="Feature importance" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Stack ── -->
+<section id="stack">
+  <div class="section-inner">
+    <div class="section-label">Technology Stack</div>
+    <h2 class="section-title">Tools & Libraries</h2>
+    <p class="section-desc">Built with Python's data science ecosystem.</p>
+    <div class="stack-grid">
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#3776ab"></div>Python 3.x</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#e78c24"></div>Pandas · NumPy</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#f7931e"></div>Scikit-learn</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#00d4ff"></div>SMOTE (custom)</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#11557c"></div>Matplotlib · Seaborn</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#ff6b35"></div>Joblib (model serialization)</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#f5c518"></div>Kaggle Dataset</div>
+      <div class="stack-item fade-in"><div class="stack-dot" style="background:#24292e"></div>GitHub</div>
+    </div>
+
+    
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div>Credit Card Fraud Detection · Internship Project · 2026</div>
+  <div style="margin-top:0.5rem;">
+    Built by <span class="heart">Salmali</span> using Python, scikit-learn &amp; open data from
+    <a href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud" target="_blank">Kaggle</a>
+  </div>
+</footer>
+
+<script>
+// ── Scroll-triggered fade-in ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Animate metric bars on scroll ──
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.metric-bar-fill').forEach(bar => {
+        const w = bar.getAttribute('data-width');
+        setTimeout(() => { bar.style.width = w + '%'; }, 200);
+      });
+      barObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.model-card').forEach(el => barObserver.observe(el));
+
+// ── Counter animation for hero stats ──
+function animateCounter(el, target, isFloat = false, prefix = '', suffix = '') {
+  let start = 0;
+  const duration = 1800;
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = eased * target;
+    el.textContent = prefix + (isFloat ? value.toFixed(2) : Math.round(value).toLocaleString()) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+const heroStats = [
+  { selector: '.hero-stats .hstat:nth-child(1) .val', val: 99.93, isFloat: true, suffix: '%' },
+  { selector: '.hero-stats .hstat:nth-child(2) .val', val: 29890, isFloat: false },
+  { selector: '.hero-stats .hstat:nth-child(3) .val', val: 0.43, isFloat: true, suffix: '%' },
+  { selector: '.hero-stats .hstat:nth-child(4) .val', val: 96.2, isFloat: true, suffix: '%' },
+];
+let heroAnimated = false;
+const heroObserver = new IntersectionObserver(([e]) => {
+  if (e.isIntersecting && !heroAnimated) {
+    heroAnimated = true;
+    heroStats.forEach(s => {
+      const el = document.querySelector(s.selector);
+      if (el) animateCounter(el, s.val, s.isFloat, s.prefix || '', s.suffix || '');
+    });
+  }
+}, { threshold: 0.5 });
+heroObserver.observe(document.querySelector('#hero'));
+</script>
+</body>
+</html>
