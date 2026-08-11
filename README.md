@@ -156,3 +156,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 - Dataset: [Machine Learning Group — ULB](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 - Built as part of an internship ML engineering project
+
+##Live Deployment
+-https://salmali-chattopadhyay.github.io/Credit_Card_Fraud_Detection/
